@@ -1,0 +1,78 @@
+{
+  "name": "system-design-canvas",
+  "displayName": "System Design Canvas",
+  "description": "Infinite canvas system design diagram editor inside VS Code with local MCP agent integration",
+  "version": "0.1.0",
+  "publisher": "system-design-canvas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/system-design-canvas/system-design-canvas"
+  },
+  "engines": {
+    "vscode": "^1.88.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "activationEvents": [
+    "onCustomEditor:systemDesign.canvas"
+  ],
+  "main": "./dist/extension/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "systemDesign.canvas",
+        "displayName": "System Design Canvas",
+        "selector": [
+          {
+            "filenamePattern": "*.sysd"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "systemDesign.newFile",
+        "title": "System Design: New File"
+      },
+      {
+        "command": "systemDesign.applyLayout",
+        "title": "System Design: Apply Layout"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./ && vite build",
+    "watch": "tsc -w -p ./",
+    "build": "tsc -p ./ && vite build",
+    "dev:webview": "vite",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@tldraw/tldraw": "^2.0.0",
+    "dagre": "^0.8.5",
+    "express": "^4.19.2",
+    "lucide-react": "^0.350.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.17.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/dagre": "^0.7.52",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/vscode": "^1.88.0",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0",
+    "vitest": "^1.4.0"
+  }
+}
