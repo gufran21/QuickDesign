@@ -6,6 +6,7 @@ import {
   createEmptyDiagram,
   NodeTypeEnum,
 } from '../core/schema.js';
+import { createDiagramFromTemplate } from '../core/templates.js';
 import {
   createNode,
   updateNode,
@@ -196,6 +197,19 @@ export const SYSTEM_DESIGN_TOOLS = {
       const diagram = createEmptyDiagram(actor);
       writeDiagramFile(args.filePath, diagram);
       return { success: true, filePath: args.filePath };
+    },
+  },
+  create_from_template: {
+    description: 'Generates a full industry-standard architecture diagram (rate-limiter, event-driven-microservices, rag-pipeline) from a preset template.',
+    execute: (args: {
+      filePath: string;
+      templateType: 'rate-limiter' | 'event-driven-microservices' | 'rag-pipeline';
+      actor?: string;
+    }) => {
+      const actor = args.actor || 'agent:mcp';
+      const diagram = createDiagramFromTemplate(args.templateType, actor);
+      writeDiagramFile(args.filePath, diagram);
+      return { success: true, filePath: args.filePath, templateType: args.templateType };
     },
   },
 };
