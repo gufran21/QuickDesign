@@ -1,85 +1,93 @@
 {
   "version": 1,
   "meta": {
-    "created": "2026-07-31T20:00:00Z",
-    "lastModified": "2026-07-31T20:30:00Z",
-    "lastModifiedBy": "agent:claude-code"
+    "created": "2026-08-02T19:30:24.372Z",
+    "lastModified": "2026-08-02T19:32:36.831Z",
+    "lastModifiedBy": "human"
   },
   "nodes": [
     {
-      "id": "n1",
-      "type": "service",
-      "label": "API Gateway",
-      "x": 100,
-      "y": 200,
+      "id": "n_1785699028458_17t46",
+      "type": "rectangle",
+      "label": "Service",
+      "x": 311.3286793262607,
+      "y": 209.0205579146312,
       "w": 140,
-      "h": 60,
-      "icon": "api-gateway",
-      "parentId": "g1"
+      "h": 60
     },
     {
-      "id": "n2",
+      "id": "n_1785699043274_6ctxi",
+      "type": "rectangle",
+      "label": "Service",
+      "x": 259.00951326001586,
+      "y": 234.7081078848717,
+      "w": 140,
+      "h": 60
+    },
+    {
+      "id": "n_1785699153507_41mxq",
+      "type": "square",
+      "label": "Component",
+      "x": 306.2445132000459,
+      "y": 290.8999785262198,
+      "w": 140,
+      "h": 60
+    },
+    {
+      "id": "n_1785699155547_g11o1",
       "type": "database",
-      "label": "Primary DB",
-      "x": 400,
-      "y": 200,
+      "label": "Database",
+      "x": 282.62252917035295,
+      "y": 287.56065164444584,
       "w": 120,
-      "h": 80,
-      "icon": "postgres",
-      "parentId": "g1"
+      "h": 80
     },
     {
-      "id": "n3",
-      "type": "cache",
-      "label": "Redis Cache",
-      "x": 250,
-      "y": 100,
-      "w": 120,
-      "h": 60,
-      "icon": "redis",
-      "parentId": "g1"
-    },
-    {
-      "id": "g1",
-      "type": "boundary",
-      "label": "VPC - Private Subnet",
-      "x": 50,
-      "y": 50,
-      "w": 520,
-      "h": 260,
-      "children": ["n1", "n2", "n3"]
+      "id": "n_1785699156831_4yzkb",
+      "type": "diamond",
+      "label": "Router / Decision",
+      "x": 236.51732394042773,
+      "y": 205.07683150957251,
+      "w": 140,
+      "h": 60
     }
   ],
-  "edges": [
-    {
-      "id": "e1",
-      "from": "n1",
-      "to": "n3",
-      "label": "cache check",
-      "style": "solid",
-      "arrowHead": "end"
-    },
-    {
-      "id": "e2",
-      "from": "n1",
-      "to": "n2",
-      "label": "reads/writes",
-      "style": "solid",
-      "arrowHead": "end"
-    }
-  ],
+  "edges": [],
   "changelog": [
     {
-      "ts": "2026-07-31T20:25:00Z",
-      "actor": "agent:claude-code",
-      "action": "create_node",
-      "target": "n3"
+      "ts": "2026-08-02T19:30:24.372Z",
+      "actor": "human",
+      "action": "create_diagram"
     },
     {
-      "ts": "2026-07-31T20:30:00Z",
+      "ts": "2026-08-02T19:30:28.460Z",
       "actor": "human",
-      "action": "move_node",
-      "target": "n1"
+      "action": "create_node",
+      "target": "n_1785699028458_17t46"
+    },
+    {
+      "ts": "2026-08-02T19:30:43.275Z",
+      "actor": "human",
+      "action": "create_node",
+      "target": "n_1785699043274_6ctxi"
+    },
+    {
+      "ts": "2026-08-02T19:32:33.507Z",
+      "actor": "human",
+      "action": "create_node",
+      "target": "n_1785699153507_41mxq"
+    },
+    {
+      "ts": "2026-08-02T19:32:35.547Z",
+      "actor": "human",
+      "action": "create_node",
+      "target": "n_1785699155547_g11o1"
+    },
+    {
+      "ts": "2026-08-02T19:32:36.831Z",
+      "actor": "human",
+      "action": "create_node",
+      "target": "n_1785699156831_4yzkb"
     }
   ]
 }

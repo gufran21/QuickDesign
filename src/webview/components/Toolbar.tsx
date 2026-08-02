@@ -4,8 +4,13 @@ import {
   Redo,
   Layout,
   Download,
+  ZoomIn,
+  ZoomOut,
   Maximize2,
   Sparkles,
+  ArrowUpRight,
+  CornerDownRight,
+  GitCommit,
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -13,6 +18,11 @@ interface ToolbarProps {
   onRedo: () => void;
   onApplyLayout: () => void;
   onExport: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onZoomFit: () => void;
+  arrowSplineStyle?: 'line' | 'elbow' | 'cubic';
+  onChangeArrowSpline?: (style: 'line' | 'elbow' | 'cubic') => void;
   lastActor?: string;
 }
 
@@ -21,6 +31,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onRedo,
   onApplyLayout,
   onExport,
+  onZoomIn,
+  onZoomOut,
+  onZoomFit,
+  arrowSplineStyle = 'line',
+  onChangeArrowSpline,
   lastActor,
 }) => {
   return (
@@ -42,6 +57,65 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <Redo size={14} />
         <span>Redo</span>
       </button>
+
+      <div className="toolbar-divider" />
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomIn}
+        title="Zoom In"
+      >
+        <ZoomIn size={14} />
+      </button>
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomOut}
+        title="Zoom Out"
+      >
+        <ZoomOut size={14} />
+      </button>
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomFit}
+        title="Zoom To Fit"
+      >
+        <Maximize2 size={14} />
+        <span>Fit</span>
+      </button>
+
+      <div className="toolbar-divider" />
+
+      {/* Arrow Spline Routing Property Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} title="Arrow Routing Style">
+        <button
+          className={`toolbar-button ${arrowSplineStyle === 'line' ? 'primary' : ''}`}
+          onClick={() => onChangeArrowSpline?.('line')}
+          title="Straight Line Arrow"
+        >
+          <ArrowUpRight size={14} />
+          <span>Straight</span>
+        </button>
+
+        <button
+          className={`toolbar-button ${arrowSplineStyle === 'elbow' ? 'primary' : ''}`}
+          onClick={() => onChangeArrowSpline?.('elbow')}
+          title="Sharp Bend / Orthogonal Arrow"
+        >
+          <CornerDownRight size={14} />
+          <span>Sharp Bend</span>
+        </button>
+
+        <button
+          className={`toolbar-button ${arrowSplineStyle === 'cubic' ? 'primary' : ''}`}
+          onClick={() => onChangeArrowSpline?.('cubic')}
+          title="Round Bend / Curved Arrow"
+        >
+          <GitCommit size={14} />
+          <span>Round Bend</span>
+        </button>
+      </div>
 
       <div className="toolbar-divider" />
 

@@ -1,13 +1,16 @@
 import React from 'react';
 import {
   MousePointer,
-  Server,
-  Database,
-  Zap,
-  Layers,
   Square,
-  ArrowRight,
   Box,
+  Database,
+  Diamond,
+  Circle,
+  Cloud,
+  Layers,
+  ArrowRight,
+  Minus,
+  Spline,
 } from 'lucide-react';
 import { NodeType } from '../../core/schema.js';
 
@@ -20,72 +23,106 @@ interface PaletteProps {
 export const Palette: React.FC<PaletteProps> = ({
   activeTool,
   onSelectTool,
-  onAddNode,
 }) => {
+  const tools = [
+    {
+      id: 'select',
+      label: 'Select',
+      shortcut: 'V',
+      icon: <MousePointer size={16} />,
+      onClick: () => onSelectTool('select'),
+    },
+    {
+      id: 'rectangle',
+      label: 'Rectangle',
+      shortcut: 'R',
+      icon: <Box size={16} />,
+      onClick: () => onSelectTool('rectangle'),
+    },
+    {
+      id: 'square',
+      label: 'Square',
+      shortcut: 'SQ',
+      icon: <Square size={16} />,
+      onClick: () => onSelectTool('square'),
+    },
+    {
+      id: 'database',
+      label: 'Database',
+      shortcut: 'D',
+      icon: <Database size={16} />,
+      onClick: () => onSelectTool('database'),
+    },
+    {
+      id: 'diamond',
+      label: 'Diamond',
+      shortcut: 'DM',
+      icon: <Diamond size={16} />,
+      onClick: () => onSelectTool('diamond'),
+    },
+    {
+      id: 'ellipse',
+      label: 'Ellipse',
+      shortcut: 'C',
+      icon: <Circle size={16} />,
+      onClick: () => onSelectTool('ellipse'),
+    },
+    {
+      id: 'cloud',
+      label: 'Cloud',
+      shortcut: 'CL',
+      icon: <Cloud size={16} />,
+      onClick: () => onSelectTool('cloud'),
+    },
+    {
+      id: 'boundary',
+      label: 'Boundary',
+      shortcut: 'G',
+      icon: <Layers size={16} />,
+      onClick: () => onSelectTool('boundary'),
+    },
+    {
+      id: 'arrow',
+      label: 'Arrow',
+      shortcut: 'A',
+      icon: <ArrowRight size={16} />,
+      onClick: () => onSelectTool('arrow'),
+    },
+    {
+      id: 'line',
+      label: 'Line',
+      shortcut: 'L',
+      icon: <Minus size={16} />,
+      onClick: () => onSelectTool('line'),
+    },
+    {
+      id: 'segment',
+      label: 'Curved Line',
+      shortcut: 'P',
+      icon: <Spline size={16} />,
+      onClick: () => onSelectTool('segment'),
+    },
+  ];
+
   return (
     <div className="palette-floating">
-      <button
-        className={`palette-item ${activeTool === 'select' ? 'active' : ''}`}
-        onClick={() => onSelectTool('select')}
-      >
-        <MousePointer size={14} />
-        <span>Select</span>
-        <span className="shortcut-badge">V</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'service' ? 'active' : ''}`}
-        onClick={() => onAddNode('service', 'New Service')}
-      >
-        <Server size={14} />
-        <span>Service</span>
-        <span className="shortcut-badge">S</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'database' ? 'active' : ''}`}
-        onClick={() => onAddNode('database', 'Database')}
-      >
-        <Database size={14} />
-        <span>Database</span>
-        <span className="shortcut-badge">D</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'cache' ? 'active' : ''}`}
-        onClick={() => onAddNode('cache', 'Cache')}
-      >
-        <Zap size={14} />
-        <span>Cache</span>
-        <span className="shortcut-badge">C</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'queue' ? 'active' : ''}`}
-        onClick={() => onAddNode('queue', 'Message Queue')}
-      >
-        <Layers size={14} />
-        <span>Queue</span>
-        <span className="shortcut-badge">Q</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'boundary' ? 'active' : ''}`}
-        onClick={() => onAddNode('boundary', 'VPC Container')}
-      >
-        <Box size={14} />
-        <span>Boundary</span>
-        <span className="shortcut-badge">G</span>
-      </button>
-
-      <button
-        className={`palette-item ${activeTool === 'connector' ? 'active' : ''}`}
-        onClick={() => onSelectTool('connector')}
-      >
-        <ArrowRight size={14} />
-        <span>Connector</span>
-        <span className="shortcut-badge">A</span>
-      </button>
+      <div className="palette-header">
+        <span className="palette-title">Shapes & Tools</span>
+      </div>
+      <div className="palette-grid">
+        {tools.map((t) => (
+          <button
+            key={t.id}
+            className={`palette-item ${activeTool === t.id ? 'active' : ''}`}
+            onClick={t.onClick}
+            title={`${t.label} (${t.shortcut})`}
+          >
+            <div className="palette-icon">{t.icon}</div>
+            <span className="palette-label">{t.label}</span>
+            <span className="palette-shortcut">{t.shortcut}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
