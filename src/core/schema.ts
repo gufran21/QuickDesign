@@ -2,10 +2,16 @@ import { z } from 'zod';
 
 export const NodeTypeEnum = z.enum([
   'service',
+  'rectangle',
+  'square',
   'database',
+  'diamond',
+  'ellipse',
+  'circle',
   'cache',
   'queue',
   'client',
+  'cloud',
   'boundary',
 ]);
 export type NodeType = z.infer<typeof NodeTypeEnum>;
@@ -24,8 +30,11 @@ export const NodeSpecSchema = z.object({
 });
 export type NodeSpec = z.infer<typeof NodeSpecSchema>;
 
-export const EdgeStyleEnum = z.enum(['solid', 'dashed']);
+export const EdgeStyleEnum = z.enum(['solid', 'dashed', 'dotted']);
 export type EdgeStyle = z.infer<typeof EdgeStyleEnum>;
+
+export const ConnectorTypeEnum = z.enum(['arrow', 'line', 'segment']);
+export type ConnectorType = z.infer<typeof ConnectorTypeEnum>;
 
 export const ArrowHeadEnum = z.enum(['end', 'both', 'none']);
 export type ArrowHead = z.infer<typeof ArrowHeadEnum>;
@@ -36,6 +45,7 @@ export const EdgeSpecSchema = z.object({
   to: z.string(),
   label: z.string().optional(),
   style: EdgeStyleEnum.default('solid'),
+  connectorType: ConnectorTypeEnum.default('arrow'),
   arrowHead: ArrowHeadEnum.default('end'),
 });
 export type EdgeSpec = z.infer<typeof EdgeSpecSchema>;

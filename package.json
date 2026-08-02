@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@tldraw/assets": "^5.2.5",
     "@tldraw/tldraw": "^2.0.0",
     "dagre": "^0.8.5",
     "express": "^4.19.2",
