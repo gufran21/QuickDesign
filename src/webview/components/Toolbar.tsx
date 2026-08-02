@@ -4,6 +4,8 @@ import {
   Redo,
   Layout,
   Download,
+  ZoomIn,
+  ZoomOut,
   Maximize2,
   Sparkles,
 } from 'lucide-react';
@@ -13,6 +15,9 @@ interface ToolbarProps {
   onRedo: () => void;
   onApplyLayout: () => void;
   onExport: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onZoomFit: () => void;
   lastActor?: string;
 }
 
@@ -21,6 +26,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onRedo,
   onApplyLayout,
   onExport,
+  onZoomIn,
+  onZoomOut,
+  onZoomFit,
   lastActor,
 }) => {
   return (
@@ -41,6 +49,33 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       >
         <Redo size={14} />
         <span>Redo</span>
+      </button>
+
+      <div className="toolbar-divider" />
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomIn}
+        title="Zoom In"
+      >
+        <ZoomIn size={14} />
+      </button>
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomOut}
+        title="Zoom Out"
+      >
+        <ZoomOut size={14} />
+      </button>
+
+      <button
+        className="toolbar-button"
+        onClick={onZoomFit}
+        title="Zoom To Fit"
+      >
+        <Maximize2 size={14} />
+        <span>Fit</span>
       </button>
 
       <div className="toolbar-divider" />

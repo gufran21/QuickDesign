@@ -6,7 +6,7 @@ import { usePostMessage } from './hooks/usePostMessage.js';
 import { Toolbar } from './components/Toolbar.js';
 import { Palette } from './components/Palette.js';
 import { ExportModal } from './components/ExportModal.js';
-import { createNode, connectNodes } from '../core/mutator.js';
+import { createNode } from '../core/mutator.js';
 import { NodeType, DiagramSpec, createEmptyDiagram } from '../core/schema.js';
 
 export const App: React.FC = () => {
@@ -16,7 +16,13 @@ export const App: React.FC = () => {
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const editorRef = useRef<Editor | null>(null);
 
-  const assetUrls = useMemo(() => getAssetUrlsByImport(), []);
+  const assetUrls = useMemo(() => {
+    try {
+      return getAssetUrlsByImport();
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   // Sync diagram from postMessage
   useEffect(() => {
@@ -25,72 +31,78 @@ export const App: React.FC = () => {
     }
   }, [initialDiagram]);
 
-  // Sync diagram nodes/edges into tldraw canvas
+  // Sync diagram nodes into tldraw editor shapes cleanly
   useEffect(() => {
     const editor = editorRef.current;
-    if (!editor || !diagram) return;
+    if (!editor || !diagram || !diagram.nodes) return;
 
-    const currentShapes = editor.getCurrentPageShapes();
-    const currentShapeIds = new Set(currentShapes.map((s) => s.id));
+    try {
+      const currentShapes = editor.getCurrentPageShapes();
+      const currentShapeIds = new Set(currentShapes.map((s) => s.id));
 
-    const shapesToCreate: any[] = [];
-    const shapesToUpdate: any[] = [];
+      const shapesToCreate: any[] = [];
+      const shapesToUpdate: any[] = [];
 
-    diagram.nodes.forEach((node) => {
-      const shapeId = createShapeId(node.id);
-      let geoType = 'rectangle';
-      let colorType = 'blue';
+      diagram.nodes.forEach((node) => {
+        if (!node.id) return;
+        const shapeId = createShapeId(node.id);
 
-      if (node.type === 'database') {
-        geoType = 'cylinder';
-        colorType = 'green';
-      } else if (node.type === 'cache') {
-        geoType = 'ellipse';
-        colorType = 'violet';
-      } else if (node.type === 'queue') {
-        geoType = 'rhombus';
-        colorType = 'orange';
-      } else if (node.type === 'boundary') {
-        geoType = 'cloud';
-        colorType = 'grey';
+        let geoType = 'rectangle';
+        let colorType = 'blue';
+
+        if (node.type === 'database') {
+          geoType = 'cylinder';
+          colorType = 'green';
+        } else if (node.type === 'cache') {
+          geoType = 'ellipse';
+          colorType = 'violet';
+        } else if (node.type === 'queue') {
+          geoType = 'rhombus';
+          colorType = 'orange';
+        } else if (node.type === 'boundary') {
+          geoType = 'cloud';
+          colorType = 'grey';
+        }
+
+        const shapeProps = {
+          id: shapeId,
+          type: 'geo',
+          x: Number.isFinite(node.x) ? node.x : 100,
+          y: Number.isFinite(node.y) ? node.y : 100,
+          props: {
+            w: Math.max(node.w || 140, 100),
+            h: Math.max(node.h || 60, 50),
+            geo: geoType,
+            color: colorType,
+            text: node.label || '',
+            font: 'mono',
+            size: 'm',
+          },
+        };
+
+        if (currentShapeIds.has(shapeId)) {
+          shapesToUpdate.push(shapeProps);
+        } else {
+          shapesToCreate.push(shapeProps);
+        }
+      });
+
+      if (shapesToCreate.length > 0) {
+        editor.createShapes(shapesToCreate);
       }
-
-      const shapeProps = {
-        id: shapeId,
-        type: 'geo',
-        x: node.x,
-        y: node.y,
-        props: {
-          w: Math.max(node.w || 140, 120),
-          h: Math.max(node.h || 60, 60),
-          geo: geoType,
-          color: colorType,
-          text: node.label,
-          font: 'mono',
-          size: 'm',
-        },
-      };
-
-      if (currentShapeIds.has(shapeId)) {
-        shapesToUpdate.push(shapeProps);
-      } else {
-        shapesToCreate.push(shapeProps);
+      if (shapesToUpdate.length > 0) {
+        editor.updateShapes(shapesToUpdate);
       }
-    });
-
-    if (shapesToCreate.length > 0) {
-      editor.createShapes(shapesToCreate);
-    }
-    if (shapesToUpdate.length > 0) {
-      editor.updateShapes(shapesToUpdate);
+    } catch (err) {
+      console.warn('[tldraw sync warn]', err);
     }
   }, [diagram]);
 
   const handleAddNode = useCallback(
     (type: NodeType, label: string) => {
       const currentDiagram = diagram || createEmptyDiagram('human');
-      const x = 200 + Math.random() * 250;
-      const y = 150 + Math.random() * 250;
+      const x = 200 + Math.random() * 200;
+      const y = 150 + Math.random() * 200;
       const { diagram: updated } = createNode(
         currentDiagram,
         { type, label, x, y },
@@ -103,15 +115,33 @@ export const App: React.FC = () => {
   );
 
   const handleUndo = useCallback(() => {
-    if (editorRef.current) {
-      editorRef.current.undo();
-    }
+    try {
+      editorRef.current?.undo();
+    } catch {}
   }, []);
 
   const handleRedo = useCallback(() => {
-    if (editorRef.current) {
-      editorRef.current.redo();
-    }
+    try {
+      editorRef.current?.redo();
+    } catch {}
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    try {
+      editorRef.current?.zoomIn();
+    } catch {}
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    try {
+      editorRef.current?.zoomOut();
+    } catch {}
+  }, []);
+
+  const handleZoomFit = useCallback(() => {
+    try {
+      editorRef.current?.zoomToFit();
+    } catch {}
   }, []);
 
   const handleExport = useCallback(() => {
@@ -156,6 +186,23 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleAddNode]);
 
+  // Disable default tldraw UI overlays to keep canvas ultra clean & lightweight
+  const tldrawComponents = useMemo(
+    () => ({
+      PageMenu: null,
+      StylePanel: null,
+      Toolbar: null,
+      NavigationPanel: null,
+      MainMenu: null,
+      QuickActions: null,
+      HelpMenu: null,
+      DebugMenu: null,
+      MenuPanel: null,
+      TopPanel: null,
+    }),
+    []
+  );
+
   return (
     <div className="canvas-container">
       <Toolbar
@@ -163,6 +210,9 @@ export const App: React.FC = () => {
         onRedo={handleRedo}
         onApplyLayout={() => triggerAutoLayout('left-to-right')}
         onExport={handleExport}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onZoomFit={handleZoomFit}
         lastActor={lastActor}
       />
 
@@ -181,6 +231,7 @@ export const App: React.FC = () => {
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
         <Tldraw
           assetUrls={assetUrls as any}
+          components={tldrawComponents as any}
           onMount={(editor) => {
             editorRef.current = editor;
           }}
