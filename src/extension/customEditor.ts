@@ -200,7 +200,7 @@ export class SystemDesignCustomEditorProvider
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-eval' 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${webview.cspSource} https: data: blob:; style-src ${webview.cspSource} 'unsafe-inline' https:; script-src ${webview.cspSource} 'unsafe-eval' 'nonce-${nonce}' https:; img-src ${webview.cspSource} data: blob: https:; font-src ${webview.cspSource} data: https:;">
   <link rel="stylesheet" href="${styleUri}">
   <title>System Design Canvas</title>
 </head>
