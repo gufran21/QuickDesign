@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   HTMLContainer,
   Rectangle2d,
   TLBaseShape,
   RecordProps,
   T,
+  useIsEditing,
 } from '@tldraw/tldraw';
 import { BaseBoxShapeUtil, resizeBox } from '@tldraw/editor';
 
@@ -16,6 +17,84 @@ export type TLDatabaseShapeProps = {
 };
 
 export type TLDatabaseShape = TLBaseShape<'database', TLDatabaseShapeProps>;
+
+const ControlledDatabaseTextarea: React.FC<{
+  shape: TLDatabaseShape;
+  editor: any;
+  innerMaxW: number;
+  innerMaxH: number;
+  fontSize: number;
+}> = ({ shape, editor, innerMaxW, innerMaxH, fontSize }) => {
+  const [text, setText] = useState(shape.props.text || '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setText(val);
+    editor.updateShape({
+      id: shape.id,
+      type: 'database',
+      props: { ...shape.props, text: val },
+    });
+  };
+
+  const lineCount = Math.max(1, text.split('\n').length);
+  const textH = Math.ceil(fontSize * 1.25 * lineCount);
+
+  return (
+    <div
+      style={{
+        width: `${innerMaxW}px`,
+        height: `${innerMaxH}px`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={handleChange}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            editor.setEditingShape(null);
+          }
+        }}
+        onBlur={() => {
+          editor.setEditingShape(null);
+        }}
+        rows={lineCount}
+        style={{
+          width: '100%',
+          height: `${textH}px`,
+          background: 'transparent',
+          border: 'none',
+          outline: 'none',
+          resize: 'none',
+          color: '#0f172a',
+          fontWeight: 500,
+          fontSize: `${fontSize}px`,
+          fontFamily: "var(--tl-font-draw), 'Shantell Sans', cursive, system-ui, -apple-system, sans-serif",
+          textAlign: 'center',
+          wordBreak: 'break-all',
+          whiteSpace: 'pre-wrap',
+          lineHeight: 1.25,
+          overflow: 'visible',
+          padding: 0,
+          margin: 0,
+        }}
+      />
+    </div>
+  );
+};
 
 export class DatabaseShapeUtil extends BaseBoxShapeUtil<TLDatabaseShape> {
   static override type = 'database' as const;
@@ -40,6 +119,8 @@ export class DatabaseShapeUtil extends BaseBoxShapeUtil<TLDatabaseShape> {
 
   override isAspectRatioLocked = () => false;
 
+  override canEdit = () => true;
+
   override onResize = (shape: TLDatabaseShape, info: any) => {
     return resizeBox(shape, info, { minWidth: 1, minHeight: 1 });
   };
@@ -57,16 +138,24 @@ export class DatabaseShapeUtil extends BaseBoxShapeUtil<TLDatabaseShape> {
   }
 
   component(shape: TLDatabaseShape) {
+    const isEditing = useIsEditing(shape.id);
     const w = Math.max(1, shape.props.w);
     const h = Math.max(1, shape.props.h);
     const text = shape.props.text || '';
 
     const strokeWidth = 2.5;
     const ry = Math.min(32, Math.max(4, h * 0.22));
+    const bottomH = Math.max(1, h - ry);
 
-    // Dynamic text size fitting nicely inside the cylinder when provided
-    const maxChars = Math.max(text.length, 6);
-    const fontSize = Math.max(10, Math.min(18, Math.floor((w - 16) / (maxChars * 0.65))));
+    // Font scaling in exact proportion to shape size
+    const minDim = Math.min(w, h);
+    const fontSize = Math.max(12, Math.min(48, Math.floor(minDim * 0.16)));
+
+    const innerMaxW = Math.max(1, w - 24);
+    const innerMaxH = Math.max(1, bottomH - 16);
+
+    const lineCount = Math.max(1, text.split('\n').length);
+    const textH = Math.ceil(fontSize * 1.25 * lineCount);
 
     return (
       <HTMLContainer
@@ -115,29 +204,50 @@ export class DatabaseShapeUtil extends BaseBoxShapeUtil<TLDatabaseShape> {
           />
         </svg>
 
-        {/* Render label only if provided by user */}
-        {text ? (
-          <span
-            style={{
-              position: 'relative',
-              zIndex: 2,
-              color: '#0f172a',
-              fontWeight: 700,
-              fontSize: `${fontSize}px`,
-              fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-              textAlign: 'center',
-              padding: '0 8px',
-              marginTop: `${ry * 0.3}px`,
-              maxWidth: `${Math.max(1, w - 12)}px`,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              lineHeight: 1.2,
-            }}
-          >
-            {text}
-          </span>
-        ) : null}
+        {/* Text Container centered strictly in the BOTTOM part (ignoring top cap y = 0..ry) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${ry}px`,
+            left: 0,
+            width: `${w}px`,
+            height: `${bottomH}px`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: isEditing ? 'all' : 'none',
+            zIndex: 2,
+            padding: '4px 12px',
+          }}
+        >
+          {isEditing ? (
+            <ControlledDatabaseTextarea
+              shape={shape}
+              editor={this.editor}
+              innerMaxW={innerMaxW}
+              innerMaxH={innerMaxH}
+              fontSize={fontSize}
+            />
+          ) : text ? (
+            <span
+              style={{
+                color: '#0f172a',
+                fontWeight: 500,
+                fontSize: `${fontSize}px`,
+                fontFamily: "var(--tl-font-draw), 'Shantell Sans', cursive, system-ui, -apple-system, sans-serif",
+                textAlign: 'center',
+                wordBreak: 'break-all',
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.25,
+                height: `${textH}px`,
+                maxWidth: `${innerMaxW}px`,
+                display: 'block',
+              }}
+            >
+              {text}
+            </span>
+          ) : null}
+        </div>
       </HTMLContainer>
     );
   }

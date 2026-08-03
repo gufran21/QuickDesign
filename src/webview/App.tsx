@@ -15,12 +15,14 @@ import { Palette } from './components/Palette.js';
 import { ExportModal } from './components/ExportModal.js';
 import { DatabaseShapeUtil } from './shapes/DatabaseShapeUtil.js';
 import { SquareShapeUtil } from './shapes/SquareShapeUtil.js';
+import { DiamondShapeUtil } from './shapes/DiamondShapeUtil.js';
 import { DatabaseTool } from './tools/DatabaseTool.js';
+import { DiamondTool } from './tools/DiamondTool.js';
 import { createNode } from '../core/mutator.js';
 import { NodeType, DiagramSpec, createEmptyDiagram } from '../core/schema.js';
 
-const CUSTOM_SHAPE_UTILS = [DatabaseShapeUtil, SquareShapeUtil];
-const CUSTOM_TOOLS = [DatabaseTool];
+const CUSTOM_SHAPE_UTILS = [DatabaseShapeUtil, SquareShapeUtil, DiamondShapeUtil];
+const CUSTOM_TOOLS = [DatabaseTool, DiamondTool];
 
 export const App: React.FC = () => {
   const { diagram: initialDiagram, lastActor, dispatchChanges, triggerAutoLayout } = usePostMessage();
@@ -80,23 +82,51 @@ export const App: React.FC = () => {
           return;
         }
 
+        if (node.type === 'diamond') {
+          const shapeProps = {
+            id: shapeId,
+            type: 'diamond',
+            x: Number.isFinite(node.x) ? node.x : 100,
+            y: Number.isFinite(node.y) ? node.y : 100,
+            props: {
+              w: Math.max(node.w || 120, 60),
+              h: Math.max(node.h || 100, 60),
+              color: 'black',
+              text: node.label || '',
+            },
+          };
+          if (currentShapeIds.has(shapeId)) shapesToUpdate.push(shapeProps);
+          else shapesToCreate.push(shapeProps);
+          return;
+        }
+
+        if (node.type === 'square') {
+          const size = Math.max(node.w || 90, node.h || 90);
+          const shapeProps = {
+            id: shapeId,
+            type: 'square',
+            x: Number.isFinite(node.x) ? node.x : 100,
+            y: Number.isFinite(node.y) ? node.y : 100,
+            props: {
+              w: size,
+              h: size,
+              color: 'light-blue',
+              text: node.label || '',
+            },
+          };
+          if (currentShapeIds.has(shapeId)) shapesToUpdate.push(shapeProps);
+          else shapesToCreate.push(shapeProps);
+          return;
+        }
+
         let geoType = 'rectangle';
         let colorType = 'blue';
-        const isSquare = node.type === 'square';
 
         switch (node.type) {
           case 'service':
           case 'rectangle':
             geoType = 'rectangle';
             colorType = 'blue';
-            break;
-          case 'square':
-            geoType = 'rectangle';
-            colorType = 'light-blue';
-            break;
-          case 'diamond':
-            geoType = 'rhombus';
-            colorType = 'yellow';
             break;
           case 'ellipse':
           case 'circle':
@@ -118,22 +148,21 @@ export const App: React.FC = () => {
             break;
         }
 
-        const width = isSquare ? Math.max(node.w || 90, 80) : Math.max(node.w || 140, 80);
-        const height = isSquare ? width : Math.max(node.h || 60, 50);
+        const width = Math.max(node.w || 140, 80);
+        const height = Math.max(node.h || 60, 50);
 
         const shapeProps = {
           id: shapeId,
           type: 'geo',
           x: Number.isFinite(node.x) ? node.x : 100,
           y: Number.isFinite(node.y) ? node.y : 100,
-          meta: { isSquare },
           props: {
             w: width,
             h: height,
             geo: geoType,
             color: colorType,
             text: node.label || '',
-            font: 'mono',
+            font: 'draw',
             size: 'm',
           },
         };
@@ -156,7 +185,7 @@ export const App: React.FC = () => {
     }
   }, [diagram]);
 
-  // Activate interactive drag-to-draw tools with crosshair cursor for all shapes
+  // Activate interactive drag-to-draw tools for all shapes
   const handleSelectTool = useCallback((tool: string) => {
     setActiveTool(tool);
     isSquareToolActiveRef.current = tool === 'square';
@@ -170,6 +199,8 @@ export const App: React.FC = () => {
         editor.setCurrentTool('arrow');
       } else if (tool === 'database') {
         editor.setCurrentTool('database');
+      } else if (tool === 'diamond') {
+        editor.setCurrentTool('diamond');
       } else {
         editor.setCurrentTool('geo');
         let geoShape = 'rectangle';
@@ -183,10 +214,6 @@ export const App: React.FC = () => {
           case 'square':
             geoShape = 'rectangle';
             colorName = 'light-blue';
-            break;
-          case 'diamond':
-            geoShape = 'rhombus';
-            colorName = 'yellow';
             break;
           case 'ellipse':
             geoShape = 'ellipse';
@@ -400,7 +427,7 @@ export const App: React.FC = () => {
                 return nextShape;
               });
 
-              // 2. Force every arrow binding to lock 100% directly on outer shape edge with ZERO gap
+              // 2. Lock arrow bindings to outer shape edge with ZERO gap
               editor.sideEffects.registerBeforeCreateHandler('binding', (binding: any) => {
                 if (binding.type === 'arrow') {
                   return {

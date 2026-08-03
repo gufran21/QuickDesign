@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   HTMLContainer,
-  Rectangle2d,
+  Polygon2d,
+  Vec,
   TLBaseShape,
   RecordProps,
   T,
@@ -9,21 +10,22 @@ import {
 } from '@tldraw/tldraw';
 import { BaseBoxShapeUtil, resizeBox } from '@tldraw/editor';
 
-export type TLSquareShapeProps = {
+export type TLDiamondShapeProps = {
   w: number;
   h: number;
   color: string;
   text: string;
 };
 
-export type TLSquareShape = TLBaseShape<'square', TLSquareShapeProps>;
+export type TLDiamondShape = TLBaseShape<'diamond', TLDiamondShapeProps>;
 
-const ControlledSquareTextarea: React.FC<{
-  shape: TLSquareShape;
+const ControlledDiamondTextarea: React.FC<{
+  shape: TLDiamondShape;
   editor: any;
-  innerSize: number;
+  innerW: number;
+  innerH: number;
   fontSize: number;
-}> = ({ shape, editor, innerSize, fontSize }) => {
+}> = ({ shape, editor, innerW, innerH, fontSize }) => {
   const [text, setText] = useState(shape.props.text || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -39,7 +41,7 @@ const ControlledSquareTextarea: React.FC<{
     setText(val);
     editor.updateShape({
       id: shape.id,
-      type: 'square',
+      type: 'diamond',
       props: { ...shape.props, text: val },
     });
   };
@@ -50,8 +52,8 @@ const ControlledSquareTextarea: React.FC<{
   return (
     <div
       style={{
-        width: `${innerSize}px`,
-        height: `${innerSize}px`,
+        width: `${innerW}px`,
+        height: `${innerH}px`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -78,11 +80,10 @@ const ControlledSquareTextarea: React.FC<{
           border: 'none',
           outline: 'none',
           resize: 'none',
-          color: '#ffffff',
+          color: '#0f172a',
           fontWeight: 500,
           fontSize: `${fontSize}px`,
           fontFamily: "var(--tl-font-draw), 'Shantell Sans', cursive, system-ui, -apple-system, sans-serif",
-          textShadow: '0 1px 3px rgba(0,0,0,0.6)',
           textAlign: 'center',
           wordBreak: 'break-all',
           whiteSpace: 'pre-wrap',
@@ -96,54 +97,78 @@ const ControlledSquareTextarea: React.FC<{
   );
 };
 
-export class SquareShapeUtil extends BaseBoxShapeUtil<TLSquareShape> {
-  static override type = 'square' as const;
+export class DiamondShapeUtil extends BaseBoxShapeUtil<TLDiamondShape> {
+  static override type = 'diamond' as const;
 
-  static override props: RecordProps<TLSquareShape> = {
+  static override props: RecordProps<TLDiamondShape> = {
     w: T.nonZeroNumber,
     h: T.nonZeroNumber,
     color: T.string,
     text: T.string,
   };
 
-  getDefaultProps(): TLSquareShapeProps {
+  getDefaultProps(): TLDiamondShapeProps {
     return {
-      w: 90,
-      h: 90,
-      color: 'light-blue',
+      w: 1,
+      h: 1,
+      color: 'black',
       text: '',
     };
   }
 
   override canResize = () => true;
 
-  override isAspectRatioLocked = () => true;
+  override isAspectRatioLocked = () => false;
 
   override canEdit = () => true;
 
-  override onResize = (shape: TLSquareShape, info: any) => {
+  override onResize = (shape: TLDiamondShape, info: any) => {
     return resizeBox(shape, info, { minWidth: 1, minHeight: 1 });
   };
 
-  override getGeometry(shape: TLSquareShape) {
-    const size = Math.max(shape.props.w, shape.props.h);
-    return new Rectangle2d({
-      x: 0,
-      y: 0,
-      width: size,
-      height: size,
+  override getGeometry(shape: TLDiamondShape) {
+    const w = Math.max(1, shape.props.w);
+    const h = Math.max(1, shape.props.h);
+    return new Polygon2d({
+      points: [
+        new Vec(w / 2, 0),
+        new Vec(w, h / 2),
+        new Vec(w / 2, h),
+        new Vec(0, h / 2),
+      ],
       isFilled: true,
     });
   }
 
-  component(shape: TLSquareShape) {
+  component(shape: TLDiamondShape) {
     const isEditing = useIsEditing(shape.id);
-    const size = Math.max(shape.props.w, shape.props.h);
+    const w = Math.max(1, shape.props.w);
+    const h = Math.max(1, shape.props.h);
     const text = shape.props.text || '';
+    const strokeWidth = 2.5;
+
+    // Smooth rounded corner radius calculation
+    const r = Math.min(10, Math.max(3, Math.min(w, h) * 0.08));
+    const rx = (r * (w / (w + h))) || 4;
+    const ry = (r * (h / (w + h))) || 4;
+
+    const pathD = `
+      M ${w / 2 - rx} ${strokeWidth / 2 + ry}
+      Q ${w / 2} ${strokeWidth / 2} ${w / 2 + rx} ${strokeWidth / 2 + ry}
+      L ${w - strokeWidth / 2 - rx} ${h / 2 - ry}
+      Q ${w - strokeWidth / 2} ${h / 2} ${w - strokeWidth / 2 - rx} ${h / 2 + ry}
+      L ${w / 2 + rx} ${h - strokeWidth / 2 - ry}
+      Q ${w / 2} ${h - strokeWidth / 2} ${w / 2 - rx} ${h - strokeWidth / 2 - ry}
+      L ${strokeWidth / 2 + rx} ${h / 2 + ry}
+      Q ${strokeWidth / 2} ${h / 2} ${strokeWidth / 2 + rx} ${h / 2 - ry}
+      Z
+    `;
 
     // Font scaling in exact proportion to shape size
-    const fontSize = Math.max(12, Math.min(48, Math.floor(size * 0.16)));
-    const innerSize = Math.max(1, size - 16);
+    const minDim = Math.min(w, h);
+    const fontSize = Math.max(12, Math.min(48, Math.floor(minDim * 0.16)));
+    const innerW = Math.max(1, w * 0.58);
+    const innerH = Math.max(1, h * 0.58);
 
     const lineCount = Math.max(1, text.split('\n').length);
     const textH = Math.ceil(fontSize * 1.25 * lineCount);
@@ -152,19 +177,33 @@ export class SquareShapeUtil extends BaseBoxShapeUtil<TLSquareShape> {
       <HTMLContainer
         style={{
           pointerEvents: 'all',
-          width: size,
-          height: size,
+          width: w,
+          height: h,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-          border: '2px solid #60a5fa',
-          borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
           position: 'relative',
+          userSelect: 'none',
         }}
       >
-        {/* Text Container centered strictly in the center of the square */}
+        <svg
+          width={w}
+          height={h}
+          viewBox={`0 0 ${w} ${h}`}
+          style={{ position: 'absolute', inset: 0, overflow: 'visible' }}
+        >
+          <path
+            d={pathD}
+            fill="#ffffff"
+            stroke="#1e293b"
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* Text Container centered strictly in the center of the diamond */}
         <div
           style={{
             position: 'absolute',
@@ -178,26 +217,26 @@ export class SquareShapeUtil extends BaseBoxShapeUtil<TLSquareShape> {
           }}
         >
           {isEditing ? (
-            <ControlledSquareTextarea
+            <ControlledDiamondTextarea
               shape={shape}
               editor={this.editor}
-              innerSize={innerSize}
+              innerW={innerW}
+              innerH={innerH}
               fontSize={fontSize}
             />
           ) : text ? (
             <span
               style={{
-                color: '#ffffff',
+                color: '#0f172a',
                 fontWeight: 500,
                 fontSize: `${fontSize}px`,
                 fontFamily: "var(--tl-font-draw), 'Shantell Sans', cursive, system-ui, -apple-system, sans-serif",
-                textShadow: '0 1px 3px rgba(0,0,0,0.6)',
                 textAlign: 'center',
                 wordBreak: 'break-all',
                 whiteSpace: 'pre-wrap',
                 lineHeight: 1.25,
                 height: `${textH}px`,
-                maxWidth: `${innerSize}px`,
+                maxWidth: `${innerW}px`,
                 display: 'block',
               }}
             >
@@ -209,8 +248,13 @@ export class SquareShapeUtil extends BaseBoxShapeUtil<TLSquareShape> {
     );
   }
 
-  override indicator(shape: TLSquareShape) {
-    const size = Math.max(shape.props.w, shape.props.h);
-    return <rect width={size} height={size} rx={8} />;
+  override indicator(shape: TLDiamondShape) {
+    const w = Math.max(1, shape.props.w);
+    const h = Math.max(1, shape.props.h);
+    return (
+      <polygon
+        points={`${w / 2},0 ${w},${h / 2} ${w / 2},${h} 0,${h / 2}`}
+      />
+    );
   }
 }
